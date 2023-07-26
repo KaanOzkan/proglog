@@ -1,7 +1,8 @@
 package server
 
-import(
+import (
 	"context"
+
 	api "github.com/kaanozkan/proglog/api/v1"
 	"google.golang.org/grpc"
 )
@@ -12,8 +13,8 @@ type Config struct {
 
 var _ api.LogServer = (*grpcServer)(nil)
 
-func NewGRPCServer(config *Config) (*grpc.Server, error) {
-	gsrv := grpc.NewServer()
+func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, error) {
+	gsrv := grpc.NewServer(opts...)
 	srv, err := newgrpcServer(config)
 	if err != nil {
 		return nil, err
@@ -36,19 +37,19 @@ func newgrpcServer(config *Config) (srv *grpcServer, err error) {
 }
 
 func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (*api.ProduceResponse, error) {
-		offset, err := s.CommitLog.Append(req.Record)
-		if err != nil {
-			return nil, err
-		}
-		return &api.ProduceResponse{Offset: offset}, nil
+	offset, err := s.CommitLog.Append(req.Record)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ProduceResponse{Offset: offset}, nil
 }
 
 func (s *grpcServer) Consume(ctx context.Context, req *api.ConsumeRequest) (*api.ConsumeResponse, error) {
-		record, err := s.CommitLog.Read(req.Offset)
-		if err != nil {
-			return nil, err
-		}
-		return &api.ConsumeResponse{Record: record}, nil
+	record, err := s.CommitLog.Read(req.Offset)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ConsumeResponse{Record: record}, nil
 }
 
 func (s *grpcServer) ProduceStream(stream api.Log_ProduceStreamServer) error {
